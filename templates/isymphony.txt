@@ -1,0 +1,1 @@
+<Extension extensionNumber="@Label@" name="@Firstname@ @Lastname@" peerName="SIP/@Address@" alternateOriginationMethod="" voiceMailBox="@Label@" voiceMailBoxContext="@vmcontext@" cellPhoneNumber="" email="" DID="" originatingContext="" redirectingContext="" agentLoginContext="" agentLoginInterface="" agentLoginPenalty="0" musicOnHoldClass="" autoAnswer="false"></Extension>

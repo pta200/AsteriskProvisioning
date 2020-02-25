@@ -1,0 +1,11 @@
+		<item>
+                        <ln>@Lastname@</ln>
+                        <fn>@Firstname@</fn>
+                        <ct>@Label@</ct>
+                        <sd></sd>
+                        <rt>3</rt>
+                        <ad>0</ad>
+                        <ar>0</ar>
+                        <bw>0</bw>
+                        <bb>0</bb>
+                </item>
