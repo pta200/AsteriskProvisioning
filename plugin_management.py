@@ -1,37 +1,9 @@
 import importlib.util
 import os
+import sys
 from abc import ABC, abstractmethod
-
-class PluginBase(ABC):
-    @abstractmethod
-    def run(self, data):
-        """Processes the given data using the plugin's logic."""
-        pass
-
-    @property
-    @abstractmethod
-    def name(self):
-        """Returns the name of the plugin."""
-        pass
-
-
-class UppercasePlugin(PluginBase):
-    def run(self, data):
-        return data.upper()
-
-    @property
-    def name(self):
-        return "uppercase"
-
-class ReversePlugin(PluginBase):
-    def run(self, data):
-        return data[::-1]
-
-    @property
-    def name(self):
-        return "reverse"
+from plugins.plugins_base import PluginBase
     
-
 class PluginManager:
     def __init__(self, plugin_dir="plugins"):
         self.plugin_dir = plugin_dir
@@ -46,10 +18,11 @@ class PluginManager:
                     spec = importlib.util.spec_from_file_location(module_name, os.path.join(self.plugin_dir, filename))
                     if spec and spec.loader:
                         module = importlib.util.module_from_spec(spec)
+                        sys.modules[spec.name] = module  # Add to sys.modules
                         spec.loader.exec_module(module)
 
-                        for name in dir(module):
-                            obj = getattr(module, name)
+                        # for name in dir(module):
+                        for name, obj in module.__dict__.items():
                             if isinstance(obj, type) and issubclass(obj, PluginBase) and obj is not PluginBase:
                                 plugin_instance = obj()
                                 self.plugins[plugin_instance.name] = plugin_instance

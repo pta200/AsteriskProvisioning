@@ -203,33 +203,33 @@ class Properties(object):
         # Java escapes the '=' and ':' in the value
         # string with backslashes in the store method.
         # So let us do the same.
-        newvalue = value.replace(':','\:')
-        newvalue = newvalue.replace('=','\=')
+        # newvalue = value.replace(':','\:')
+        # newvalue = newvalue.replace('=','\=')
 
-        return newvalue
+        return value
 
     def unescape(self, value):
 
         # Reverse of escape
-        newvalue = value.replace('\:',':')
-        newvalue = newvalue.replace('\=','=')
+        # newvalue = value.replace('\:',':')
+        # newvalue = newvalue.replace('\=','=')
 
-        return newvalue    
+        return value
         
     def load(self, stream):
         """ Load properties from an open file stream """
         
         # For the time being only accept file input streams
         if type(stream) is not file:
-            raise TypeError,'Argument should be a file object!'
+            raise TypeError('Argument should be a file object!')
         # Check for the opened mode
         if stream.mode != 'r':
-            raise ValueError,'Stream should be opened in read-only mode!'
+            raise ValueError('Stream should be opened in read-only mode!')
 
         try:
             lines = stream.readlines()
             self.__parse(lines)
-        except IOError, e:
+        except IOError as e:
             raise
 
     def getProperty(self, key):
@@ -243,7 +243,7 @@ class Properties(object):
         if type(key) is str and type(value) is str:
             self.processPair(key, value)
         else:
-            raise TypeError,'both key and value should be strings!'
+            raise TypeError('both key and value should be strings!')
 
     def propertyNames(self):
         """ Return an iterator over all the keys of the property
@@ -264,7 +264,7 @@ class Properties(object):
         with the optional 'header' """
 
         if out.mode[0] != 'w':
-            raise ValueError,'Steam should be opened in write mode!'
+            raise ValueError('Steam should be opened in write mode!')
 
         try:
             out.write(''.join(('#',header,'\n')))
@@ -276,7 +276,7 @@ class Properties(object):
                 out.write(''.join((prop,'=',self.escape(val),'\n')))
                 
             out.close()
-        except IOError, e:
+        except IOError as e:
             raise
 
     def getPropertyDict(self):
@@ -333,27 +333,26 @@ def check_prev_char(password, current_char_set):
 
 def buildPhoneConfig(macTemplate, mac, name, extension, address, password):
 	# build Polycom line key configuration file so single MAC address
-	print mac + "\n"
-	try:
-                f = open(macTemplate,"r")
-                contents = f.read()
-                f.close()
-        except:
-                print "unable to open file" + macTemplate +".\n"
-                sys.exit()
+    print(mac)
+    try:
+        with open(macTemplate, "r") as f:
+            contents = f.read()
+    except:
+            print ("unable to open file" + macTemplate)
+            sys.exit()
                 
-        contents = contents.replace('@DisplayName@'
-        	,name).replace('@Address@'
-        	,address).replace('@Label@'
-        	,extension).replace('@Password@',password)
-        
-        try:
-        	f = open(mac,"w")
-        	f.write(contents)
-        	f.close()
-        except:
-        	print "unable to write file" + mac +".\n"
-                sys.exit()
+    contents = contents.replace('@DisplayName@'
+        ,name).replace('@Address@'
+        ,address).replace('@Label@'
+        ,extension).replace('@Password@',password)
+    
+    try:
+        with open(mac, "w") as file:
+            f.write(contents)
+
+    except:
+        print("unable to write file" + mac)
+        sys.exit()
         
 	
 def buildVoiceMailConfig(extension, name, email):
@@ -362,61 +361,63 @@ def buildVoiceMailConfig(extension, name, email):
 
 def buildSIPConfig(sipTemplate, mac, name, extension, address, voicemail, secret):
 	# build sip extension configuration
-	try:
-                f = open(sipTemplate,"r")
-                contents = f.read()
-                f.close()
-        except:
-                print "unable to open file" + sipTemplate +".\n"
-                sys.exit()
-         
+    try:
+        with open(sipTemplate,"r") as f:
+            contents = f.read()
+
         return contents.replace('@DisplayName@'
-        	,name).replace('@Address@',address).replace('@Label@'
-        	,extension).replace('@voicemail.context@',voicemail).replace('@secret@',secret)
+            ,name).replace('@Address@',address).replace('@Label@'
+            ,extension).replace('@voicemail.context@',voicemail).replace('@secret@',secret)
+    except:
+        print("unable to open file" + sipTemplate)
+        sys.exit()
+
 
 
 def buildDirectory(dirTemplate, extension, firstname, lastname):
 	# Build Polycom extension default directory file entry
-	try:
-                f = open(dirTemplate,"r")
-                contents = f.read()
-                f.close()
-        except:
-                print "unable to open file" + dirTemplate +".\n"
-                sys.exit()
-                
+    try:
+        with open(dirTemplate,"r") as f:
+            contents = f.read()
+
         return contents.replace('@Firstname@'
-        	,firstname).replace('@Lastname@'
-        	,lastname).replace('@Label@',extension)
+        ,firstname).replace('@Lastname@'
+        ,lastname).replace('@Label@',extension)
+
+    except:
+        print("unable to open file" + dirTemplate)
+        sys.exit()
+
 
 	
 def buildiSymphony(iSymphonyTemplate, extension, firstname, lastname, mac, vmcontext):
 	# Build iSymphony extension configuration	
-	try:
-                f = open(iSymphonyTemplate,"r")
-                contents = f.read()
-                f.close()
-        except:
-                print "unable to open file" + iSymphonyTemplate +".\n"
-                sys.exit()
-                
+    try:
+        with open(iSymphonyTemplate,"r") as f:
+            contents = f.read()
+             
         return contents.replace('@Firstname@'
-        	,firstname).replace('@Lastname@'
-        	,lastname).replace('@Label@'
-        	,extension).replace('@Address@'
-        	,mac).replace('@vmcontext@',vmcontext)
+            ,firstname).replace('@Lastname@'
+            ,lastname).replace('@Label@'
+            ,extension).replace('@Address@'
+            ,mac).replace('@vmcontext@',vmcontext)
+
+    except:
+        print("unable to open file" + iSymphonyTemplate)
+        sys.exit()
+
 
 def buildGlobals(extension, name, address):
 	# Build extension & SIP channel global dialplan variable
 	fixname = "".join(name.split())
-	print address
+	print(address)
 	
 	return "m" + fixname  + "=" + extension + "\ns" + fixname + "=" + "SIP/" + address + "\n"  
 
 def buildExtensionDial(name):
 	# Build extension dialplan dial statment
 	fixname = "".join(name.split())
-	print fixname
+	print(fixname)
 	return "exten => ${m" + fixname + "},1,Gosub(standardVM,${EXTEN},1(${s" + fixname  + "},${CONTEXT},${EXTEN}))\n"  + buildHint(fixname)
 	
 def buildHint(name):
@@ -425,12 +426,12 @@ def buildHint(name):
 
 def openFiles(filename, att):
 	# Return config file handle.
-	 try:
-             return  open(filename,att)
-             
-         except:
-                print "unable to open file" + filename +".\n"
-                sys.exit()
+    try:
+        return  open(filename,att)
+                
+    except:
+        print("unable to open file" + filename)
+        sys.exit()
 
 def checkPhoneFlag(flag):
 	if (flag == "-m"): return 0
@@ -495,112 +496,112 @@ def PhoneSipConfig(flag, p, line, secret, sip):
 
 def main():
 	
-	# Check all paramaters are passed
-	if len(sys.argv) < 5:
-		print "Usage: GentTaukConf.py [-e extension] | [-m MAC] [-p password] | [-np no password]  <properties file> <extension file>\n"
-		print "Extension File CSV Format:"
-		print "First Last Name,Email,Extension,MAC Address\n"
-		print "Example:"
-		print "Foo Bar,fbar@specailai.com,8186,0004F214B68B"
-		sys.exit()
+    # Check all paramaters are passed
+    if len(sys.argv) < 5:
+        print("Usage: GentTaukConf.py [-e extension] | [-m MAC] [-p password] | [-np no password]  <properties file> <extension file>\n")
+        print("Extension File CSV Format:")
+        print("First Last Name,Email,Extension,MAC Address\n")
+        print("Example:")
+        print("Foo Bar,fbar@specailai.com,8186,0004F214B68B")
+        sys.exit()
 
-	# open java stile properties file related to config build
-        p = Properties()
-        p.load(open(sys.argv[3]))
-        
-        # clear gen directory
-        if os.path.exists(p['gen.dir']):
-        	shutil.rmtree(p['gen.dir'])        
-	os.mkdir(p['gen.dir'])
-        
-        # open extension provisioning spread sheet
-        f = openFiles(sys.argv[4],"r")
-        
-        # open target  configuration files
-        globalcontext = openFiles(p['gen.dir'] + os.sep 
-        	+ p['global.var.file'],"w")
-        
-        extenscontext = openFiles(p['gen.dir'] + os.sep 
-        	+ p['master.context.file'],"w")
-        
-        voicemail = openFiles(p['gen.dir'] + os.sep 
-        	+ p['voicemail.conf'],"w")
-        
-        sip = openFiles(p['gen.dir'] + os.sep 
-        	+ p['sip.user.conf'],"w")
-        
-        directory = openFiles(p['gen.dir'] + os.sep 
-        	+ p['directory.file'],"w")
-        directory.write(p['directory.header'] + "\n")
-        
-        isymphony = openFiles(p['gen.dir'] + os.sep 
-        	+ p['isymphony.file'],"w")
+    # open java stile properties file related to config build
+    p = Properties()
+    p.load(open(sys.argv[3]))
+
+    # clear gen directory
+    if os.path.exists(p['gen.dir']):
+        shutil.rmtree(p['gen.dir'])        
+    os.mkdir(p['gen.dir'])
+
+    # open extension provisioning spread sheet
+    f = openFiles(sys.argv[4],"r")
+
+    # open target  configuration files
+    globalcontext = openFiles(p['gen.dir'] + os.sep 
+    + p['global.var.file'],"w")
+
+    extenscontext = openFiles(p['gen.dir'] + os.sep 
+    + p['master.context.file'],"w")
+
+    voicemail = openFiles(p['gen.dir'] + os.sep 
+    + p['voicemail.conf'],"w")
+
+    sip = openFiles(p['gen.dir'] + os.sep 
+    + p['sip.user.conf'],"w")
+
+    directory = openFiles(p['gen.dir'] + os.sep 
+    + p['directory.file'],"w")
+    directory.write(p['directory.header'] + "\n")
+
+    isymphony = openFiles(p['gen.dir'] + os.sep 
+        + p['isymphony.file'],"w")
         
 	# loop through each extension in provisionning sheet and build out configurations
-        while(1):
-                line = f.readline()
-                
-                if not line: break
-                if line != "\n":
-                	# strip whitespace and break string into list
-			provline = string.splitfields(line.strip(),',')
-			
-			# lower case MAC address
-			provline[3] = provline[3].lower()
-			
-			#gen password if flag is set
-			if (sys.argv[2] == "-p"):
-				secret = generate_pass(8)
-			else:
-				secret = ""			
+    while(1):
+        line = f.readline()
 
-			# Write tauk polycom phone config & sip configuration
-			PhoneSipConfig(sys.argv[1],p,provline,secret,sip)
-			
-			#Write vars in global context
-			if (sys.argv[1] == "-m"):
-				#MAC
-				globalcontext.write(buildGlobals(provline[2]
-					,provline[0],provline[3]))
-			else:
-				#Exten
-				globalcontext.write(buildGlobals(provline[2]
-					,provline[0],provline[2]))		
-			
-                	#Write exten/hint in phone registration context
-			extenscontext.write(buildExtensionDial(provline[0]))
-                	
-                	#Write voicemail configuration
-			voicemail.write(buildVoiceMailConfig(provline[2]
-				,provline[0],provline[1]))
-				
-			#Write polycom directory file/iSymphony extensions file
-			name = string.splitfields(provline[0],' ')
-			if (len(name) > 1):
-				directory.write(buildDirectory(p['templates.dir'] + os.sep
-					+ p['directory.template'],provline[2],name[0],name[1]))
-				
-				if (sys.argv[1] == "-m"):
-					isymphony.write(buildiSymphony(p['templates.dir'] + os.sep
-						+ p['isymphony.template'],provline[2],name[0],name[1],provline[3],p['voicemail.context']))
-				else:
-					isymphony.write(buildiSymphony(p['templates.dir'] + os.sep
-						+ p['isymphony.template'],provline[2],name[0],name[1],provline[2],p['voicemail.context']))
-						
-			else:
-				directory.write(buildDirectory(p['templates.dir'] + os.sep
-					+ p['directory.template'],provline[2],provline[0],""))
-				
-				if (sys.argv[1] == "-m"):
-					isymphony.write(buildiSymphony(p['templates.dir'] + os.sep
-						+ p['isymphony.template'],provline[2],name[0]," ",provline[3],p['voicemail.context']))
-				else:
-					isymphony.write(buildiSymphony(p['templates.dir'] + os.sep
-						+ p['isymphony.template'],provline[2],name[0]," ",provline[2],p['voicemail.context']))
+        if not line: break
+        if line != "\n":
+            # strip whitespace and break string into list
+            provline = string.splitfields(line.strip(),',')
+
+        # lower case MAC address
+        provline[3] = provline[3].lower()
+
+        #gen password if flag is set
+        if (sys.argv[2] == "-p"):
+            secret = generate_pass(8)
+        else:
+            secret = ""			
+
+        # Write tauk polycom phone config & sip configuration
+        PhoneSipConfig(sys.argv[1],p,provline,secret,sip)
+
+        #Write vars in global context
+        if (sys.argv[1] == "-m"):
+            #MAC
+            globalcontext.write(buildGlobals(provline[2]
+                ,provline[0],provline[3]))
+        else:
+            #Exten
+            globalcontext.write(buildGlobals(provline[2]
+                ,provline[0],provline[2]))		
+
+                #Write exten/hint in phone registration context
+        extenscontext.write(buildExtensionDial(provline[0]))
                 
+                #Write voicemail configuration
+        voicemail.write(buildVoiceMailConfig(provline[2]
+            ,provline[0],provline[1]))
+            
+        #Write polycom directory file/iSymphony extensions file
+        name = string.splitfields(provline[0],' ')
+        if (len(name) > 1):
+            directory.write(buildDirectory(p['templates.dir'] + os.sep
+                + p['directory.template'],provline[2],name[0],name[1]))
+            
+            if (sys.argv[1] == "-m"):
+                isymphony.write(buildiSymphony(p['templates.dir'] + os.sep
+                    + p['isymphony.template'],provline[2],name[0],name[1],provline[3],p['voicemail.context']))
+            else:
+                isymphony.write(buildiSymphony(p['templates.dir'] + os.sep
+                    + p['isymphony.template'],provline[2],name[0],name[1],provline[2],p['voicemail.context']))
+                    
+        else:
+            directory.write(buildDirectory(p['templates.dir'] + os.sep
+                + p['directory.template'],provline[2],provline[0],""))
+            
+            if (sys.argv[1] == "-m"):
+                isymphony.write(buildiSymphony(p['templates.dir'] + os.sep
+                    + p['isymphony.template'],provline[2],name[0]," ",provline[3],p['voicemail.context']))
+            else:
+                isymphony.write(buildiSymphony(p['templates.dir'] + os.sep
+                    + p['isymphony.template'],provline[2],name[0]," ",provline[2],p['voicemail.context']))
+        
         directory.write(p['directory.footer'])
         directory.close()
-	globalcontext.close()
+        globalcontext.close()
         extenscontext.close()
         voicemail.close()
         sip.close()      
