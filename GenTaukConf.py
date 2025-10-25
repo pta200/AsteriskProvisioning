@@ -1,4 +1,5 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python3
+
 import sys, string, os, re, time, shutil
 from os import urandom
 from random import choice
