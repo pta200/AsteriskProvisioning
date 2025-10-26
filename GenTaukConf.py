@@ -4,6 +4,8 @@ import sys, string, os, re, time, shutil
 from os import urandom
 from random import choice
 from configparser import ConfigParser
+import argparse
+import traceback
 
 char_set = {'small': 'abcdefghijklmnopqrstuvwxyz',
              'nums': '0123456789',
@@ -52,7 +54,6 @@ def generate_pass(length):
 
 def buildPhoneConfig(macTemplate, mac, name, extension, address, password):
 	# build Polycom line key configuration file so single MAC address
-    print(mac)
     try:
         with open(macTemplate, "r") as f:
             contents = f.read()
@@ -66,11 +67,12 @@ def buildPhoneConfig(macTemplate, mac, name, extension, address, password):
         ,extension).replace('@Password@',password)
     
     try:
-        with open(mac, "w") as file:
+        with open(mac, "w") as f:
             f.write(contents)
 
-    except:
-        print("unable to write file" + mac)
+    except Exception as e:
+        print("unable to write file " + mac)
+        traceback.print_exc()
         sys.exit()
         
 	
@@ -129,14 +131,14 @@ def buildiSymphony(iSymphonyTemplate, extension, firstname, lastname, mac, vmcon
 def buildGlobals(extension, name, address):
 	# Build extension & SIP channel global dialplan variable
 	fixname = "".join(name.split())
-	print(address)
+	# print(address)
 	
 	return "m" + fixname  + "=" + extension + "\ns" + fixname + "=" + "SIP/" + address + "\n"  
 
 def buildExtensionDial(name):
 	# Build extension dialplan dial statment
 	fixname = "".join(name.split())
-	print(fixname)
+	# print(fixname)
 	return "exten => ${m" + fixname + "},1,Gosub(standardVM,${EXTEN},1(${s" + fixname  + "},${CONTEXT},${EXTEN}))\n"  + buildHint(fixname)
 	
 def buildHint(name):
@@ -153,7 +155,7 @@ def openFiles(filename, att):
         sys.exit()
 
 def checkPhoneFlag(flag):
-	if (flag == "-m"): return 0
+	if (flag == "mac"): return 0
 	return 1
 	
 def checkPhonePass(secret):
@@ -212,22 +214,34 @@ def PhoneSipConfig(flag, p, line, secret, sip):
                 		+ p['sip.user.conf'],line[3],line[0]
                 		,line[2],line[2],p['voicemail.context'],secret))
 
+def make_argparser():
+    parser = argparse.ArgumentParser(description='Tool to generate Tauk Asterisk and Polycom phone configurations.  \
+                                     Outputs files to gen directory specified in property file')
+    
+    parser.add_argument("properties", help="Property file name containing application configuration and templates")
+    parser.add_argument("extensions", help="Extension File CSV Format: First Last Name, Email, Extension, MAC Address " \
+                        "Example: John Smith,js@specailai.com,8186,0004F214B68B")
+    
+    parser.add_argument('--device', '-d', default='extension',
+                    help="Device name either 'extension' or 'mac', defaults to extension")
+    parser.add_argument('--password', '-p', action='store_true',
+                        help='Generate device passwords.')
+
+
+    return parser
 
 def main():
 	
-    # Check all paramaters are passed
-    if len(sys.argv) < 5:
-        print("Usage: GentTaukConf.py [-e extension] | [-m MAC] [-p password] | [-np no password]  <properties file> <extension file>\n")
-        print("Extension File CSV Format:")
-        print("First Last Name,Email,Extension,MAC Address\n")
-        print("Example:")
-        print("Foo Bar,fbar@specailai.com,8186,0004F214B68B")
-        sys.exit()
+    # parse args
+    arg_parser = make_argparser()
+    args = arg_parser.parse_args()
 
-    # open config file
-    parser = ConfigParser()
-    parser.read(sys.argv[3])
-    p = parser.items('default')
+    # open config file and add default contents to dict
+    config_parser = ConfigParser()
+    config_parser.read(args.properties)
+    p = {}
+    for key, val in config_parser.items('default'):
+        p[key] = val
 
     # clear gen directory
     if os.path.exists(p['gen.dir']):
@@ -235,23 +249,23 @@ def main():
     os.mkdir(p['gen.dir'])
 
     # open extension provisioning spread sheet
-    f = openFiles(sys.argv[4],"r")
+    f = openFiles(args.extensions, "r")
 
     # open target  configuration files
     globalcontext = openFiles(p['gen.dir'] + os.sep 
-    + p['global.var.file'],"w")
+        + p['global.var.file'],"w")
 
     extenscontext = openFiles(p['gen.dir'] + os.sep 
-    + p['master.context.file'],"w")
+        + p['master.context.file'],"w")
 
     voicemail = openFiles(p['gen.dir'] + os.sep 
-    + p['voicemail.conf'],"w")
+        + p['voicemail.conf'],"w")
 
     sip = openFiles(p['gen.dir'] + os.sep 
-    + p['sip.user.conf'],"w")
+        + p['sip.user.conf'],"w")
 
     directory = openFiles(p['gen.dir'] + os.sep 
-    + p['directory.file'],"w")
+        + p['directory.file'],"w")
     directory.write(p['directory.header'] + "\n")
 
     isymphony = openFiles(p['gen.dir'] + os.sep 
@@ -264,22 +278,22 @@ def main():
         if not line: break
         if line != "\n":
             # strip whitespace and break string into list
-            provline = string.splitfields(line.strip(),',')
+            provline = line.lstrip().rstrip().split(',')
 
         # lower case MAC address
         provline[3] = provline[3].lower()
 
         #gen password if flag is set
-        if (sys.argv[2] == "-p"):
+        if args.password:
             secret = generate_pass(8)
         else:
             secret = ""			
 
         # Write tauk polycom phone config & sip configuration
-        PhoneSipConfig(sys.argv[1],p,provline,secret,sip)
+        PhoneSipConfig(args.device,p,provline,secret,sip)
 
         #Write vars in global context
-        if (sys.argv[1] == "-m"):
+        if (args.device == "mac"):
             #MAC
             globalcontext.write(buildGlobals(provline[2]
                 ,provline[0],provline[3]))
@@ -296,12 +310,12 @@ def main():
             ,provline[0],provline[1]))
             
         #Write polycom directory file/iSymphony extensions file
-        name = string.splitfields(provline[0],' ')
+        name = provline[0].split(' ')
         if (len(name) > 1):
             directory.write(buildDirectory(p['templates.dir'] + os.sep
                 + p['directory.template'],provline[2],name[0],name[1]))
             
-            if (sys.argv[1] == "-m"):
+            if (args.device == "mac"):
                 isymphony.write(buildiSymphony(p['templates.dir'] + os.sep
                     + p['isymphony.template'],provline[2],name[0],name[1],provline[3],p['voicemail.context']))
             else:
@@ -312,20 +326,20 @@ def main():
             directory.write(buildDirectory(p['templates.dir'] + os.sep
                 + p['directory.template'],provline[2],provline[0],""))
             
-            if (sys.argv[1] == "-m"):
+            if (args.device == "mac"):
                 isymphony.write(buildiSymphony(p['templates.dir'] + os.sep
                     + p['isymphony.template'],provline[2],name[0]," ",provline[3],p['voicemail.context']))
             else:
                 isymphony.write(buildiSymphony(p['templates.dir'] + os.sep
                     + p['isymphony.template'],provline[2],name[0]," ",provline[2],p['voicemail.context']))
         
-        directory.write(p['directory.footer'])
-        directory.close()
-        globalcontext.close()
-        extenscontext.close()
-        voicemail.close()
-        sip.close()      
-        f.close()
+    directory.write(p['directory.footer'])
+    directory.close()
+    globalcontext.close()
+    extenscontext.close()
+    voicemail.close()
+    sip.close()      
+    f.close()
 
 if __name__=="__main__":
        main()
