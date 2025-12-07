@@ -1,5 +1,5 @@
 # AsteriskProvisioning
-Python script to generate Asterisk 1.8 configuration files for Tauk phone system using config file templates in templates directory and build properties configuration file. Goal was to use only Python only libraries to avoid installing an external dependencies.
+Python script to generate Asterisk 1.8 configuration files for Tauk phone system using config file templates in templates directory and build properties configuration file. Goal was to use only Python native libraries to avoid installing an external dependencies.
 
 - sip.conf
 - extensions.conf
